@@ -4,3 +4,4 @@ flake8
 autoflake
 mypy
 pre-commit
+shiv
