@@ -128,12 +128,12 @@ def cli(
         generated_blob_url = generate_usage_blob_data(cm_client, billing_account_name, period.name)
 
         blob_account_url = "https://{}.blob.core.windows.net/".format(storage_account_name)
-
+        storage_resource = "https://storage.azure.com/"
         if storage_account_subscription is None:
-            credential, _ = get_azure_cli_credentials(resource=blob_account_url)
+            credential, _ = get_azure_cli_credentials(resource=storage_resource)
         else:
             credential = get_azure_cli_credentials_non_default_sub(
-                resource=blob_account_url, subscription=storage_account_subscription
+                resource=storage_resource, subscription=storage_account_subscription
             )
         service = BlobServiceClient(account_url=blob_account_url, credential=credential)
         container = service.get_container_client("usage-final")
@@ -154,7 +154,12 @@ def cli(
                 time.sleep(10)
                 continue
 
-            print("Transfer ended... ", props.copy.status, props.copy.progress, props.copy.status_description)
+            print(
+                "Transfer ended... ",
+                props.copy.status,
+                props.copy.progress,
+                props.copy.status_description if props.copy.status_description else "",
+            )
             break
 
     print("Data load complete.")
