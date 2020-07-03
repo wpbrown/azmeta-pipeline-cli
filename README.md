@@ -10,10 +10,6 @@ Download the binary and mark the download executable.
 
 ```shell
 demo@Azure:~$ wget -O azmpcli https://github.com/wpbrown/azmeta-pipeline-cli/releases/latest/download/azmpcli.pyz
-
-...
-2020-07-03 16:45:22 (24.8 MB/s) - ‘azmpcli’ saved [8766883/8766883]
-
 demo@Azure:~$ chmod +x azmpcli
 ```
 
@@ -39,9 +35,6 @@ Download the binary.
 
 ```shell
 demo@machine:~$ wget -O azmpcli https://github.com/wpbrown/azmeta-pipeline-cli/releases/latest/download/azmpcli.pyz
-
-...
-2020-07-03 16:45:22 (24.8 MB/s) - ‘azmpcli’ saved [8766883/8766883]
 ```
 
 Run with Python.
