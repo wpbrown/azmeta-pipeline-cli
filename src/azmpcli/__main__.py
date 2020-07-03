@@ -2,11 +2,11 @@ import datetime
 import itertools
 import json
 import time
-from typing import Collection, Iterable, List
+from typing import Any, Collection, Iterable, List
 
 import click
 from azure.common.client_factory import get_client_from_cli_profile
-from azure.common.credentials import get_azure_cli_credentials
+from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
 from azure.mgmt.billing import BillingManagementClient
 from azure.mgmt.billing.models import BillingPeriod
 from azure.mgmt.consumption import ConsumptionManagementClient
@@ -72,13 +72,29 @@ def get_billing_accounts(client: BillingManagementClient) -> List[str]:
     ]
 
 
+def get_azure_cli_credentials_non_default_sub(resource: str, subscription: str) -> Any:
+    profile = get_cli_profile()
+    cred, _, _ = profile.get_login_credentials(resource=resource, subscription_id=subscription)
+    return cred
+
+
 @click.command()
 @click.option("-s", "--storage", "storage_account_name", help="Storage account name.", required=True)
+@click.option(
+    "--storage-subscription",
+    "storage_account_subscription",
+    help="CLI account subscription to access storage (not required).",
+)
 @click.option(
     "-a", "--account", "billing_account_name", help="EA billing account number.", show_default="Auto-detect"
 )
 @click.argument("billing_periods", nargs=-1)
-def cli(storage_account_name: str, billing_account_name: str, billing_periods: Collection[str]) -> None:
+def cli(
+    storage_account_name: str,
+    billing_account_name: str,
+    billing_periods: Collection[str],
+    storage_account_subscription: str,
+) -> None:
     billing_client = get_client_from_cli_profile(BillingManagementClient)
 
     if billing_account_name is None:
@@ -112,7 +128,13 @@ def cli(storage_account_name: str, billing_account_name: str, billing_periods: C
         generated_blob_url = generate_usage_blob_data(cm_client, billing_account_name, period.name)
 
         blob_account_url = "https://{}.blob.core.windows.net/".format(storage_account_name)
-        credential, _ = get_azure_cli_credentials(resource=blob_account_url)
+
+        if storage_account_subscription is None:
+            credential, _ = get_azure_cli_credentials(resource=blob_account_url)
+        else:
+            credential = get_azure_cli_credentials_non_default_sub(
+                resource=blob_account_url, subscription=storage_account_subscription
+            )
         service = BlobServiceClient(account_url=blob_account_url, credential=credential)
         container = service.get_container_client("usage-final")
         blob = container.get_blob_client("export/finalamortized/{}/manual_load.csv".format(export_label))
@@ -129,7 +151,7 @@ def cli(storage_account_name: str, billing_account_name: str, billing_periods: C
                     props.copy.progress,
                     props.copy.status_description,
                 )
-                time.sleep(30)
+                time.sleep(10)
                 continue
 
             print("Transfer ended... ", props.copy.status, props.copy.progress, props.copy.status_description)
