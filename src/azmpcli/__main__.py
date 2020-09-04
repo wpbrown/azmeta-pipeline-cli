@@ -1,16 +1,14 @@
 import datetime
 import itertools
 import json
-import time
+import uuid
 from typing import Any, Collection, Iterable, List
 
 import click
 from azure.common.client_factory import get_client_from_cli_profile
-from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
+from azure.common.credentials import get_cli_profile
 from azure.mgmt.billing import BillingManagementClient
 from azure.mgmt.billing.models import BillingPeriod
-from azure.mgmt.consumption import ConsumptionManagementClient
-from azure.storage.blob import BlobServiceClient
 
 from . import _patch  # noqa: F401
 
@@ -40,20 +38,60 @@ def get_billing_periods(client: BillingManagementClient, names: Iterable[str]) -
     return selected_periods
 
 
-def generate_usage_blob_data(
-    client: ConsumptionManagementClient, billing_account_name: str, billing_period: str
+def generate_onetime_export(
+    client: BillingManagementClient,
+    billing_account_name: str,
+    billing_period: BillingPeriod,
+    storage_account_resource_id: str,
 ) -> str:
-    download_operation = client.usage_details.download(
-        "/providers/Microsoft.Billing/billingAccounts/{}/providers/Microsoft.Billing/"
-        "billingPeriods/{}".format(billing_account_name, billing_period),
-        metric="amortizedcost",
+    service_client = client._client
+    name = f"onetime{str(uuid.uuid1()).replace('-', '')}"
+    url = service_client.format_url(
+        "/providers/Microsoft.Billing/billingAccounts/{enrollmentId}"
+        "/providers/Microsoft.CostManagement/exports/{name}",
+        enrollmentId=billing_account_name,
+        name=name,
     )
-    while not download_operation.done():
-        download_operation.wait(30)
-        print("Generate data status: {}".format(download_operation.status()))
-    download_result = download_operation.result()
-    print("Got URL to blob: {}".format(download_result.download_url))
-    return download_result.download_url
+    query_parameters = {"api-version": "2020-06-01"}
+    header_parameters = {"Content-Type": "application/json"}
+    content = {
+        "properties": {
+            "definition": {
+                "dataSet": {"granularity": "Daily"},
+                "timePeriod": {
+                    "from": f"{billing_period.billing_period_start_date.strftime('%Y-%m-%d')}T00:00:00Z",
+                    "to": f"{billing_period.billing_period_end_date.strftime('%Y-%m-%d')}T23:59:59Z",
+                },
+                "timeframe": "Custom",
+                "type": "AmortizedCost",
+            },
+            "deliveryInfo": {
+                "destination": {
+                    "container": "usage-final",
+                    "resourceId": storage_account_resource_id,
+                    "rootFolderPath": "export",
+                }
+            },
+            "format": "Csv",
+            "schedule": {"status": "Inactive"},
+        }
+    }
+    request = service_client.put(url, query_parameters, header_parameters, content)
+    response = service_client.send(request, stream=False)
+    if response.status_code != 201:
+        raise Exception("Failed to create export.")
+    result = json.loads(response.content)
+    return result["id"]
+
+
+def start_onetime_export(client: BillingManagementClient, export_resource_id: str) -> None:
+    service_client = client._client
+    url = service_client.format_url("/{resourceId}/run", resourceId=export_resource_id)
+    query_parameters = {"api-version": "2020-06-01"}
+    request = service_client.post(url, query_parameters)
+    response = service_client.send(request, stream=False)
+    if response.status_code != 200:
+        raise Exception("Failed to start export.")
 
 
 def get_billing_accounts(client: BillingManagementClient) -> List[str]:
@@ -79,23 +117,19 @@ def get_azure_cli_credentials_non_default_sub(resource: str, subscription: str) 
 
 
 @click.command()
-@click.option("-s", "--storage", "storage_account_name", help="Storage account name.", required=True)
 @click.option(
-    "--storage-subscription",
-    "storage_account_subscription",
-    help="CLI account subscription to access storage (not required).",
+    "-s", "--storage", "storage_account_resource_id", help="Storage account resource id.", required=True
 )
 @click.option(
     "-a", "--account", "billing_account_name", help="EA billing account number.", show_default="Auto-detect"
 )
 @click.argument("billing_periods", nargs=-1)
 def cli(
-    storage_account_name: str,
+    storage_account_resource_id: str,
     billing_account_name: str,
     billing_periods: Collection[str],
-    storage_account_subscription: str,
 ) -> None:
-    billing_client = get_client_from_cli_profile(BillingManagementClient)
+    billing_client: BillingManagementClient = get_client_from_cli_profile(BillingManagementClient)
 
     if billing_account_name is None:
         accounts = get_billing_accounts(billing_client)
@@ -123,46 +157,13 @@ def cli(
             period.billing_period_end_date.strftime("%Y%m%d"),
         )
 
-        print("Generating usage data (this can take 5 to 10 minutes)...")
-        cm_client = get_client_from_cli_profile(ConsumptionManagementClient)
-        generated_blob_url = generate_usage_blob_data(cm_client, billing_account_name, period.name)
+        print(f"Create onetime export for {export_label}...")
+        resource_id = generate_onetime_export(
+            billing_client, billing_account_name, period, storage_account_resource_id
+        )
+        start_onetime_export(billing_client, resource_id)
 
-        blob_account_url = "https://{}.blob.core.windows.net/".format(storage_account_name)
-        storage_resource = "https://storage.azure.com/"
-        if storage_account_subscription is None:
-            credential, _ = get_azure_cli_credentials(resource=storage_resource)
-        else:
-            credential = get_azure_cli_credentials_non_default_sub(
-                resource=storage_resource, subscription=storage_account_subscription
-            )
-        service = BlobServiceClient(account_url=blob_account_url, credential=credential)
-        container = service.get_container_client("usage-final")
-        blob = container.get_blob_client("export/finalamortized/{}/manual_load.csv".format(export_label))
-        blob.start_copy_from_url(generated_blob_url)
-        while True:
-            props = blob.get_blob_properties()
-            if props.copy is None:
-                time.sleep(5)
-                continue
-            if props.copy.status == "pending":
-                print(
-                    "Blob is transferring... ",
-                    props.copy.status,
-                    props.copy.progress,
-                    props.copy.status_description,
-                )
-                time.sleep(10)
-                continue
-
-            print(
-                "Transfer ended... ",
-                props.copy.status,
-                props.copy.progress,
-                props.copy.status_description if props.copy.status_description else "",
-            )
-            break
-
-    print("Data load complete.")
+    print("Queued all exports.")
 
 
 if __name__ == "__main__":

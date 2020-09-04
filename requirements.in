@@ -1,5 +1,3 @@
 azure-cli-core
 azure-mgmt-billing
-azure-mgmt-consumption
-azure-storage-blob
 click
