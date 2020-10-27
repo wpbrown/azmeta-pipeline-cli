@@ -23,7 +23,7 @@ cffi==1.14.0              # via bcrypt, cryptography, pynacl
 chardet==3.0.4            # via requests
 click==7.1.2              # via -r requirements.in
 colorama==0.4.3           # via azure-cli-core, knack
-cryptography==2.9.2       # via adal, paramiko, pyjwt, pyopenssl
+cryptography==3.2         # via adal, paramiko, pyjwt, pyopenssl
 humanfriendly==8.2        # via azure-cli-core
 idna==2.10                # via requests
 isodate==0.6.0            # via msrest
