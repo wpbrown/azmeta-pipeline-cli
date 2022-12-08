@@ -4,48 +4,145 @@
 #
 #    pip-compile requirements.in
 #
-adal==1.2.4               # via azure-cli-core, msrestazure
-applicationinsights==0.11.9  # via azure-cli-telemetry
-argcomplete==1.11.1       # via azure-cli-core, knack
-azure-cli-core==2.8.0     # via -r requirements.in
-azure-cli-nspkg==3.0.4    # via azure-cli-core, azure-cli-telemetry
-azure-cli-telemetry==1.0.4  # via azure-cli-core
-azure-common==1.1.25      # via azure-mgmt-billing, azure-mgmt-resource
-azure-core==1.6.0         # via azure-mgmt-core
-azure-mgmt-billing==0.2.0  # via -r requirements.in
-azure-mgmt-core==1.0.0    # via azure-cli-core
-azure-mgmt-nspkg==3.0.2   # via azure-mgmt-billing
-azure-mgmt-resource==10.0.0  # via azure-cli-core
-azure-nspkg==3.0.2        # via azure-cli-nspkg, azure-mgmt-nspkg
-bcrypt==3.1.7             # via paramiko
-certifi==2020.6.20        # via msrest, requests
-cffi==1.14.0              # via bcrypt, cryptography, pynacl
-chardet==3.0.4            # via requests
-click==7.1.2              # via -r requirements.in
-colorama==0.4.3           # via azure-cli-core, knack
-cryptography==2.9.2       # via adal, paramiko, pyjwt, pyopenssl
-humanfriendly==8.2        # via azure-cli-core
-idna==2.10                # via requests
-isodate==0.6.0            # via msrest
-jmespath==0.10.0          # via azure-cli-core, knack
-knack==0.7.1              # via azure-cli-core
-msal-extensions==0.1.3    # via azure-cli-core
-msal==1.0.0               # via azure-cli-core, msal-extensions
-msrest==0.6.17            # via azure-cli-core, azure-mgmt-resource, msrestazure
-msrestazure==0.6.4        # via azure-cli-core, azure-mgmt-billing, azure-mgmt-resource
-oauthlib==3.1.0           # via requests-oauthlib
-paramiko==2.7.1           # via azure-cli-core
-pkginfo==1.5.0.1          # via azure-cli-core
-portalocker==1.7.0        # via azure-cli-telemetry, msal-extensions
-pycparser==2.20           # via cffi
-pygments==2.6.1           # via knack
-pyjwt[crypto]==1.7.1      # via adal, azure-cli-core, msal
-pynacl==1.4.0             # via paramiko
-pyopenssl==19.1.0         # via azure-cli-core
-python-dateutil==2.8.1    # via adal
-pyyaml==5.3.1             # via knack
-requests-oauthlib==1.3.0  # via msrest
-requests==2.24.0          # via adal, azure-cli-core, azure-core, msal, msrest, requests-oauthlib
-six==1.15.0               # via azure-cli-core, azure-core, bcrypt, cryptography, isodate, knack, msrestazure, pynacl, pyopenssl, python-dateutil
-tabulate==0.8.7           # via knack
-urllib3==1.25.9           # via requests
+adal==1.2.4
+    # via
+    #   azure-cli-core
+    #   msrestazure
+applicationinsights==0.11.9
+    # via azure-cli-telemetry
+argcomplete==1.11.1
+    # via
+    #   azure-cli-core
+    #   knack
+azure-cli-core==2.8.0
+    # via -r requirements.in
+azure-cli-nspkg==3.0.4
+    # via
+    #   azure-cli-core
+    #   azure-cli-telemetry
+azure-cli-telemetry==1.0.4
+    # via azure-cli-core
+azure-common==1.1.25
+    # via
+    #   azure-mgmt-billing
+    #   azure-mgmt-resource
+azure-core==1.6.0
+    # via azure-mgmt-core
+azure-mgmt-billing==0.2.0
+    # via -r requirements.in
+azure-mgmt-core==1.0.0
+    # via azure-cli-core
+azure-mgmt-nspkg==3.0.2
+    # via azure-mgmt-billing
+azure-mgmt-resource==10.0.0
+    # via azure-cli-core
+azure-nspkg==3.0.2
+    # via
+    #   azure-cli-nspkg
+    #   azure-mgmt-nspkg
+bcrypt==3.1.7
+    # via paramiko
+certifi==2022.12.7
+    # via
+    #   msrest
+    #   requests
+cffi==1.14.0
+    # via
+    #   bcrypt
+    #   cryptography
+    #   pynacl
+chardet==3.0.4
+    # via requests
+click==7.1.2
+    # via -r requirements.in
+colorama==0.4.3
+    # via
+    #   azure-cli-core
+    #   knack
+cryptography==2.9.2
+    # via
+    #   adal
+    #   paramiko
+    #   pyjwt
+    #   pyopenssl
+humanfriendly==8.2
+    # via azure-cli-core
+idna==2.10
+    # via requests
+isodate==0.6.0
+    # via msrest
+jmespath==0.10.0
+    # via
+    #   azure-cli-core
+    #   knack
+knack==0.7.1
+    # via azure-cli-core
+msal==1.0.0
+    # via
+    #   azure-cli-core
+    #   msal-extensions
+msal-extensions==0.1.3
+    # via azure-cli-core
+msrest==0.6.17
+    # via
+    #   azure-cli-core
+    #   azure-mgmt-resource
+    #   msrestazure
+msrestazure==0.6.4
+    # via
+    #   azure-cli-core
+    #   azure-mgmt-billing
+    #   azure-mgmt-resource
+oauthlib==3.1.0
+    # via requests-oauthlib
+paramiko==2.7.1
+    # via azure-cli-core
+pkginfo==1.5.0.1
+    # via azure-cli-core
+portalocker==1.7.0
+    # via
+    #   azure-cli-telemetry
+    #   msal-extensions
+pycparser==2.20
+    # via cffi
+pygments==2.6.1
+    # via knack
+pyjwt[crypto]==1.7.1
+    # via
+    #   adal
+    #   azure-cli-core
+    #   msal
+pynacl==1.4.0
+    # via paramiko
+pyopenssl==19.1.0
+    # via azure-cli-core
+python-dateutil==2.8.1
+    # via adal
+pyyaml==5.3.1
+    # via knack
+requests==2.24.0
+    # via
+    #   adal
+    #   azure-cli-core
+    #   azure-core
+    #   msal
+    #   msrest
+    #   requests-oauthlib
+requests-oauthlib==1.3.0
+    # via msrest
+six==1.15.0
+    # via
+    #   azure-cli-core
+    #   azure-core
+    #   bcrypt
+    #   cryptography
+    #   isodate
+    #   knack
+    #   msrestazure
+    #   pynacl
+    #   pyopenssl
+    #   python-dateutil
+tabulate==0.8.7
+    # via knack
+urllib3==1.25.9
+    # via requests
